@@ -222,12 +222,14 @@ layout: default
 
 ---
 layout: default
+zoom: 0.8
 ---
 
 <br />
 
 
-# Deepseek already apply the same idea!!!
+# Deepseek has already applied the same idea😻
+Deepseek将会开源他们的推理引擎(基于vllm)[The Path to Open-Sourcing the DeepSeek Inference Engine](https://github.com/deepseek-ai/open-infra-index/blob/main/OpenSourcing_DeepSeek_Inference_Engine/README.md)
 
 [DeepSeek-V3 / R1 推理系统概览](https://zhuanlan.zhihu.com/p/27181462601)
 
