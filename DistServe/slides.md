@@ -2,6 +2,7 @@
 # You can also start simply with 'default'
 theme: neversink
 layout: intro
+routerMode: hash
 color: light
 ---
 
@@ -218,3 +219,16 @@ layout: default
 ---
 
 ![20250415164048](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415164048.png)
+
+---
+layout: default
+---
+
+<br />
+
+
+# Deepseek already apply the same idea!!!
+
+[DeepSeek-V3 / R1 推理系统概览](https://zhuanlan.zhihu.com/p/27181462601)
+
+![20250415222631](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415222631.png)
