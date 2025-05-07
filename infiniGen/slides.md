@@ -182,3 +182,73 @@ layout: two-cols-title
 ### Skewed Partial Weight
 
 ::left::
+
+![20250507214626](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507214626.png)
+
+::right::
+
+<br/>
+
+the attention score highly depends on a few columns in the query and key matrices
+
+<br/>
+make a few columns in the query and key matrices have much larger magnitude than others, a much smaller number of columns significantly affects the attention pattern.
+
+---
+layout: two-cols-title
+---
+
+::title::
+# Prefetching Opportunities
+### Skewed Partial Weight
+
+::left::
+multiplying the query and key weight matrices with the same orthogonal matrix A
+
+![20250507220724](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507220724.png)
+
+::right::
+![20250507222819](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507222819.png)
+
+::default::
+
+## To make it align with the direction that Q stretches the most
+
+---
+layout: default
+---
+
+# Efficiently Prefetching KV Cache
+
+![20250507225142](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507225142.png)
+
+Prefill 阶段对LLM每层的Query矩阵进行SVD分解，乘上矩阵A并保存调整后的模型权重（如上一页）
+
+---
+layout: default
+---
+
+# Prefill Stage
+
+![20250507225634](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507225634.png)
+
+### 对Query和Key矩阵取绝对值相加，取出Top-K大的列，得到Partial Query矩阵
+
+---
+layout: default
+---
+
+# Decoding Stage
+
+![20250507230142](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507230142.png)
+
+### 使用`Partial Query`矩阵进行运算，根据`i-1`层的输入选择`i`层预取的Token
+
+---
+layout: default
+---
+
+# Experimental Setup
+
+![20250507230758](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507230758.png)
+
