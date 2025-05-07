@@ -1,7 +1,7 @@
 ---
 # You can also start simply with 'default'
 theme: neversink
-layout: intro
+layout: cover
 routerMode: hash
 color: light
 ---
@@ -11,225 +11,174 @@ color: light
 **Efficient Generative Inference of Large Language Models  with Dynamic KV Cache Management**
 
 
-<!--
-分享DistServe
-把大模型的Prefill和Decoding拆分
-Prefill->输入提示词，输出第一个Token
-Decoding->一个一个输出Token
--->
+---
+layout: default
+---
+
+# Background
+
+![20250507143854](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507143854.png)
+
+LLM推理过程中需要KV-Cache存储大量的中间计算结果➡️提高上下文长度/批处理需要占用大量显存
 
 ---
 layout: two-cols-title
-columns: is-6
-align: l-lt-lt
 ---
 
 ::title::
 
-# BackGround
+# Prior works
 
+Quantization/Eviction
 
 ::left::
 
-LLM 
+## Quantization
+
+![20250507145021](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507145021.png)
 
 ::right::
 
-![value](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/value.png)
+## Eviction
 
-<!--
-Token embeding之后形成向量，向量乘以WQ,WK，之后如图进行点乘，SoftMax之后乘矩阵V，得到DeltaE，把DeltaE加入原始的嵌入向量
--->
+![20250507145154](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507145154.png)
 
+
+---
+layout: two-cols-title
+---
+
+::title::
+
+# Limitations of Prior Approaches
+
+::left::
+
+![20250507150806](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507150806.png)
+
+::right::
+
+![20250507150857](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507150857.png)
+
+
+
+
+---
+layout: two-cols-title
+---
+
+::title::
+
+# Limitations of Prior Approaches
+
+::left::
+
+![20250507151739](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507151739.png)
+
+::right::
+
+<br/>
+<br/>
+<br/>
+
+ - KV-Cache仍然线性增长
+ - 精度丢失
+ - 资源浪费
+
+🤔考虑把KV-Cache搬到内存
+
+
+---
+layout: two-cols-title
+---
+::title::
+
+# KV Cache Offloading
+
+::left::
+
+<br/>
+<br/>
+
+![20250507152408](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507152408.png)
+
+::right::
+
+<br/>
+<br/>
+
+### GPU memory: Expensive & Small
+
+💵：
+$3 \times RTX 3090 \approx RTX A6000$ 
+
+The same `GA102` core, only more 24GB memory
+
+<br/>
+
+### CPU memory: Cheap  & Large
+
+Easy to expand
 
 ---
 layout: default
 ---
 
-# Prefill&Decoding
+# Problem of Offloading
 
-![mlp](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/mlp.png)
-
-[**大语言模型如何储存事实-3Blue1Brown**](https://www.bilibili.com/video/BV1aTxMehEjK)
-
-<!--
-mlp依然是大量的矩阵乘法，这个过程各个vector之间并不产生关系
--->
-
----
-layout: default
----
-
-![20250415150420](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415150420.png)
-
+![20250507155025](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507155025.png)
 
 ---
 layout: two-cols-title
-columns: is-5
-align: lm-lm-lm
+columns: is-7
 ---
 
 ::title::
-# 💰😭
+# InfiniGen
 
 ::left::
-![20250415150620](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415150620.png)
+![20250507213108](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507213108.png)
 
 ::right::
 
-木桶效应，达到预设的SLO（TFTT和TPOT的时延要求），Exising System: 1.6 reqs/s
+<br/>
+<br/>
+<br/>
 
-🤔 拆开prefill和decoding阶段，如图，给每个decoding分配多个prefill，可以节省GPU（提升了利用率）
+### **Dynamic KV Cache Management**
 
-<!--
-在一台NVIDIA 80GB A100上，在输入长度=512，输出长度=64的合成工作负载下为具有13B参数的LLM提供服务时的性能。上：比较现有系统与仅服务于预填充阶段的系统的P90time-per-output-token（TTFT）延迟。下：比较现有系统与仅服务于解码阶段的系统的P90time-per-output-token（TPOT）延迟。
--->
+ - **Transfer Less**: Load and compute only with a few important tokens
+ - **Transfer Early**: Prefetch essential KV entries in the preceding layer
 
 ---
 layout: two-cols-title
-colunms: is-5
-align: lt-lm-lm
 ---
 
 ::title::
 
-# Batching
-
-Batch requests in prefill and decoding phase together
-
+# Prefetching Opportunities
+### Attention Input Similarity
 ::left::
 
-![20250415153941](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415153941.png)
+![20250507213728](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507213728.png)
 
 ::right::
 
-Batching prefill and decoding phase together hurt both TTFT and TPOT
+<br/>
+<br/>
 
-Prefill: Compute-bound
-
-Decoding: Memory-bound
-
-批处理这两个阶段使它们共享相同的并行策略，难以同时优化TTFT和TOPT
+![20250507213808](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250507213808.png)
 
 ::default::
 
+layer `i-1` 的输入经过`layer-normalized`作为 layer `i` 的输入，layer `i` 的很大程度受到layer `i-1` 的影响
 
 ---
 layout: two-cols-title
-colunms: is-4
-align: lt-lm-lm
 ---
 
 ::title::
-# Opportunity: Disaggregating Prefill and Decoding
+# Prefetching Opportunities
+### Skewed Partial Weight
 
 ::left::
-
-![20250415160442](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415160442.png)
-
-::right::
-
-```mermaid
-    sequenceDiagram
-        participant User
-        participant PrefillInstance
-        participant DecodingInstance
-
-        User->>PrefillInstance: 输入Prompt
-        Note over PrefillInstance: Prefill阶段
-        PrefillInstance->>PrefillInstance: 计算Token并生成KV Cache
-        PrefillInstance->>DecodingInstance: 发送KV Cache                                                                                                                                                                    
-        Note over DecodingInstance: Decoding阶段开始
-        loop 逐个生成Token
-            DecodingInstance->>DecodingInstance: 使用KV Cache解码
-            DecodingInstance->>User: 输出生成结果
-        end
-        Note over DecodingInstance: Decoding完成
-```
-
----
-layout: default
----
-# A100 80G = 🚗
-
-![20250415161146](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415161146.png)
-
-
----
-layout: default
----
-
-![20250415161836](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415161836.png)
-
----
-layout: full
----
-
-![20250415161932](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415161932.png)
-
-
----
-layout: default
----
-
-# kv-cache传输开销
-
-![20250415162311](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415162311.png)
-
-
----
-color: light
-layout: top-title
-align: l
----
-
-:: title ::
-
-# 算法实现
-
-:: content ::
-
-![20250415163605](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415163605.png)
-
-
----
-layout: default
----
-
-
-![20250415163735](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415163735.png)
-
-
----
-layout: default
----
-![20250415163758](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415163758.png)
-
-
----
-layout: default
----
-
-![20250415164030](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415164030.png)
-
-
----
-layout: default
----
-
-![20250415164048](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415164048.png)
-
----
-layout: default
-zoom: 0.8
----
-
-<br />
-
-
-# Deepseek has already applied the same idea😻
-Deepseek将会开源他们的推理引擎(基于vllm)[The Path to Open-Sourcing the DeepSeek Inference Engine](https://github.com/deepseek-ai/open-infra-index/blob/main/OpenSourcing_DeepSeek_Inference_Engine/README.md)
-
-[DeepSeek-V3 / R1 推理系统概览](https://zhuanlan.zhihu.com/p/27181462601)
-
-![20250415222631](https://markdown-1308105459.cos.ap-beijing.myqcloud.com/Typora/20250415222631.png)
